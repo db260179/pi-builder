@@ -28,8 +28,8 @@ BOARD ?= rpi
 STAGES ?= __init__ os pikvm-repo watchdog no-bluetooth no-audit ro ssh-keygen __cleanup__
 
 HOSTNAME ?= pi
-LOCALE ?= en_US
-TIMEZONE ?= Europe/Moscow
+LOCALE ?= en_GB
+TIMEZONE ?= Europe/London
 #REPO_URL ?= http://mirror.yandex.ru/archlinux-arm
 REPO_URL = http://de3.mirror.archlinuxarm.org
 BUILD_OPTS ?=
@@ -52,7 +52,7 @@ _BUILD_DIR = ./.build
 _BUILDED_IMAGE_CONFIG = ./.builded.conf
 
 _QEMU_GUEST_ARCH = arm
-_QEMU_STATIC_BASE_URL = http://mirror.yandex.ru/debian/pool/main/q/qemu
+_QEMU_STATIC_BASE_URL = http://ftp.uk.debian.org/debian/pool/main/q/qemu
 _QEMU_COLLECTION = qemu
 _QEMU_STATIC = $(_QEMU_COLLECTION)/qemu-$(_QEMU_GUEST_ARCH)-static
 _QEMU_STATIC_GUEST_PATH ?= $(QEMU_PREFIX)/bin/qemu-$(_QEMU_GUEST_ARCH)-static
