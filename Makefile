@@ -24,6 +24,7 @@
 -include config.mk
 
 PROJECT ?= common
+ARCH ?= arm
 BOARD ?= rpi
 STAGES ?= __init__ os pikvm-repo watchdog no-bluetooth no-audit ro ssh-keygen __cleanup__
 
@@ -103,6 +104,7 @@ endef
 define show_running_config
 $(call say,"Running configuration")
 @ echo "    PROJECT = $(PROJECT)"
+@ echo "    ARCH   = $(ARCH)"
 @ echo "    BOARD   = $(BOARD)"
 @ echo "    STAGES  = $(STAGES)"
 @ echo
@@ -211,6 +213,7 @@ os: $(__DEP_BINFMT) _buildctx
 			--tag $(_RPI_RESULT_IMAGE) \
 			$(if $(TAG),--tag $(TAG),) \
 			$(if $(call optbool,$(NC)),--no-cache,) \
+			--build-arg "ARCH=$(ARCH)" \
 			--build-arg "BOARD=$(BOARD)" \
 			--build-arg "LOCALE=$(LOCALE)" \
 			--build-arg "TIMEZONE=$(TIMEZONE)" \

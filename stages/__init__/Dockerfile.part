@@ -5,8 +5,10 @@ COPY "qemu-%QEMU_GUEST_ARCH%-static" "%QEMU_STATIC_GUEST_PATH%"
 RUN mkdir -p /etc/pacman.d/hooks \
 	&& ln -s /dev/null /etc/pacman.d/hooks/30-systemd-tmpfiles.hook
 
+ARG ARCH
 ARG BOARD
 ENV BOARD $BOARD
+ENV ARCH $ARCH
 
 ARG LOCALE
 ENV LOCALE $LOCALE
