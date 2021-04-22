@@ -9,7 +9,6 @@ RUN pacman -Syu --noconfirm --needed \
 		parted \
 		dosfstools \
 		rsync \
-	&& (pacman --noconfirm -Sc || true) \
 	&& rm -rf /var/cache/pacman/pkg/*
 
 RUN mkdir /tools

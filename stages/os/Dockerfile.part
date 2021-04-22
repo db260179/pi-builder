@@ -15,19 +15,19 @@ RUN echo "Server = $REPO_URL/\$arch/\$repo" > /etc/pacman.d/mirrorlist \
 
 RUN sed -i -e "s/^CheckSpace/#!!!CheckSpace/g" /etc/pacman.conf
 
-RUN pacman --noconfirm -Syy \
-	&& pacman --needed --noconfirm -S \
+RUN pacman --noconfirm --ask=4 -Syy \
+	&& pacman --needed --noconfirm --ask=4 -S \
 		glibc \
 		pacman \
 	&& pacman-db-upgrade \
-	&& pacman --noconfirm -Syu \
-	&& pacman --needed --noconfirm -S \
+	&& pacman --noconfirm --ask=4 -Syu \
+	&& pacman --needed --noconfirm --ask=4 -S \
 		p11-kit \
 		archlinux-keyring \
 		ca-certificates \
 		ca-certificates-mozilla \
 		ca-certificates-utils \
-	&& pacman --needed --noconfirm -S \
+	&& pacman --needed --noconfirm --ask=4 -S \
 		base \
 		base-devel \
 		vim \
