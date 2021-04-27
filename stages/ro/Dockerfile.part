@@ -2,8 +2,9 @@
 
 RUN sed -i -e "s|\<rw\>|ro|g" /boot/cmdline.txt
 
-RUN mkdir -p /var/lib/private \
-	&& chmod 700 /var/lib/private
+RUN mkdir -p /var/lib/private && chmod 700 /var/lib/private \
+	&& mkdir -p /var/lib/dhcpcd && chmod 750 /var/lib/dhcpcd \
+	&& mkdir -p /var/lib/dhclient && chmod 755 /var/lib/dhclient
 
 COPY stages/ro/fstab /etc/
 COPY stages/ro/ro /usr/local/bin/
