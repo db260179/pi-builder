@@ -53,9 +53,10 @@ RUN pacman --noconfirm -Syy \
 		esac \
 	&& (pacman --noconfirm -Sc || true)
 
-RUN echo 'RNGD_OPTS="-o /dev/random -r /dev/hwrng -x 5"' > /etc/conf.d/rngd \
-	&& systemctl disable haveged \
-	&& systemctl enable rngd
+# rngd is still high cpu load so dont bother for now
+#RUN echo 'RNGD_OPTS="-o /dev/random -r /dev/hwrng -x 5"' > /etc/conf.d/rngd \
+#	&& systemctl disable haveged \
+#	&& systemctl enable rngd
 
 COPY stages/os/semop-wrapper.c /tmp
 RUN gcc -fPIC -shared -o /usr/local/lib/libpreload-semop.so /tmp/semop-wrapper.c
