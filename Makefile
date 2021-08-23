@@ -27,6 +27,7 @@ PROJECT ?= common
 ARCH ?= arm
 BOARD ?= rpi2
 STAGES ?= __init__ os pikvm-repo watchdog no-bluetooth no-audit ro ssh-keygen __cleanup__
+DOCKER ?= docker
 
 HOSTNAME ?= pi
 LOCALE ?= en_GB
@@ -160,7 +161,7 @@ rpi2 rpi3 rpi4 zero2w: os
 
 run: $(__DEP_BINFMT)
 	$(call check_build)
-	docker run \
+	$(DOCKER) run \
 			--rm \
 			--tty \
 			--hostname $(call read_builded_config,HOSTNAME) \
@@ -175,7 +176,7 @@ shell: run
 
 toolbox:
 	$(call say,"Ensuring toolbox image")
-	docker build \
+	$(DOCKER) build \
 			--rm \
 			--tag $(_TOOLBOX_IMAGE) \
 			$(if $(TAG),--tag $(TAG),) \
@@ -186,7 +187,7 @@ toolbox:
 
 binfmt: $(__DEP_TOOLBOX)
 	$(call say,"Ensuring $(_QEMU_GUEST_ARCH) binfmt")
-	docker run \
+	$(DOCKER) run \
 			--rm \
 			--tty \
 			--privileged \
@@ -199,7 +200,7 @@ binfmt: $(__DEP_TOOLBOX)
 
 scan: $(__DEP_TOOLBOX)
 	$(call say,"Searching for Pis in the local network")
-	docker run \
+	$(DOCKER) run \
 			--rm \
 			--tty \
 			--net host \
@@ -209,7 +210,7 @@ scan: $(__DEP_TOOLBOX)
 os: $(__DEP_BINFMT) _buildctx
 	$(call say,"Building OS")
 	rm -f $(_BUILDED_IMAGE_CONFIG)
-	docker build \
+	$(DOCKER) build \
 			--rm \
 			--tag $(_RPI_RESULT_IMAGE) \
 			$(if $(TAG),--tag $(TAG),) \
@@ -291,7 +292,7 @@ clean:
 	rm -rf $(_BUILD_DIR) $(_BUILDED_IMAGE_CONFIG)
 
 
-__DOCKER_RUN_TMP = docker run \
+__DOCKER_RUN_TMP = $(DOCKER) run \
 		--rm \
 		--tty \
 		--volume $(shell pwd)/$(_TMP_DIR):/root/$(_TMP_DIR) \
@@ -299,7 +300,7 @@ __DOCKER_RUN_TMP = docker run \
 	$(_TOOLBOX_IMAGE)
 
 
-__DOCKER_RUN_TMP_PRIVILEGED = docker run \
+__DOCKER_RUN_TMP_PRIVILEGED = $(DOCKER) run \
 		--rm \
 		--tty \
 		--privileged \
@@ -371,7 +372,7 @@ install-uboot:
 ifneq ($(UBOOT),)
 	$(call say,"Installing U-Boot $(UBOOT) to $(CARD)")
 	$(call check_build)
-	docker run \
+	$(DOCKER) run \
 		--rm \
 		--tty \
 		--volume `pwd`/$(_RPI_RESULT_ROOTFS)/boot:/tmp/boot \
