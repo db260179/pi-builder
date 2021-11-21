@@ -60,7 +60,7 @@ _QEMU_STATIC_GUEST_PATH ?= $(QEMU_PREFIX)/bin/qemu-$(_QEMU_GUEST_ARCH)-static
 
 _RPI_ROOTFS_URL = $(REPO_URL)/os/ArchLinuxARM-$(shell bash -c " \
 	if [ '$(BOARD)' == rpi -o '$(BOARD)' == zero -o '$(BOARD)' == zerow ]; then echo rpi; \
-	elif [ '$(BOARD)' == rpi2 -o '$(BOARD)' == rpi3 ]; then echo rpi-2; \
+	elif [ '$(BOARD)' == rpi2 -o '$(BOARD)' == rpi3 -o '$(BOARD)' == zero2w ]; then echo rpi-2; \
 	elif [ '$(BOARD)' == rpi4 ]; then echo rpi-4; \
 	else exit 1; \
 	fi \
@@ -135,7 +135,7 @@ all:
 	@ echo
 	$(call say,"Available commands")
 	@ echo "    make                     # Print this help"
-	@ echo "    make rpi|rpi2|rpi3|rpi4|zero|zerow  # Build Arch-ARM rootfs with pre-defined config"
+	@ echo "    make rpi|rpi2|rpi3|rpi4|zero|zerow|zero2w  # Build Arch-ARM rootfs with pre-defined config"
 	@ echo "    make shell               # Run Arch-ARM shell"
 	@ echo "    make toolbox             # Build the toolbox image"
 	@ echo "    make binfmt              # Configure ARM binfmt on the host system"
@@ -154,7 +154,8 @@ rpi3: BOARD=rpi3
 rpi4: BOARD=rpi4
 zero: BOARD=zero
 zerow: BOARD=zerow
-rpi rpi2 rpi3 rpi4 zero zerow: os
+zero2w: BOARD=zero2w
+rpi rpi2 rpi3 rpi4 zero zerow zero2w: os
 
 
 run: $(__DEP_BINFMT)
