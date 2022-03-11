@@ -33,6 +33,8 @@ LOCALE ?= en_GB
 TIMEZONE ?= Europe/London
 #REPO_URL = http://de3.mirror.archlinuxarm.org
 REPO_URL = http://tardis.tiny-vps.com/aarm/repos/2022/01/08
+PIKVM_REPO_URL ?= https://files.pikvm.org/repos/arch/
+PIKVM_REPO_KEY ?= 912C773ABBD1B584
 BUILD_OPTS ?=
 
 CARD ?= /dev/mmcblk0
@@ -111,6 +113,8 @@ $(call say,"Running configuration")
 @ echo "    LOCALE     = $(LOCALE)"
 @ echo "    TIMEZONE   = $(TIMEZONE)"
 @ echo "    REPO_URL   = $(REPO_URL)"
+@ echo "    PIKVM_REPO_URL   = $(PIKVM_REPO_URL)"
+@ echo "    PIKVM_REPO_KEY   = $(PIKVM_REPO_KEY)"
 @ echo
 @ echo "    CARD = $(CARD)"
 @ echo
@@ -213,6 +217,8 @@ os: $(__DEP_BINFMT) _buildctx
 			--build-arg "LOCALE=$(LOCALE)" \
 			--build-arg "TIMEZONE=$(TIMEZONE)" \
 			--build-arg "REPO_URL=$(REPO_URL)" \
+			--build-arg "PIKVM_REPO_URL=$(PIKVM_REPO_URL)" \
+			--build-arg "PIKVM_REPO_KEY=$(PIKVM_REPO_KEY)" \
 			--build-arg "REBUILD=$(shell uuidgen)" \
 			$(BUILD_OPTS) \
 		$(_BUILD_DIR)
