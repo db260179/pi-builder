@@ -94,17 +94,17 @@ Some files, like `/etc/host` and `/etc/hostname`, are automatically filled by do
 
 -----
 # TL;DR
-How to build a system for Raspberry Pi 3 and install it to the SD card:
+How to build a system for Raspberry Pi ZeroW and install it to the SD card:
 ```shell
 $ git clone https://github.com/pikvm/pi-builder
 $ cd pi-builder
-$ make rpi3
+$ make zerow
 $ make install
 ```
 
 How to build a system with your own stage list:
 ```shell
-$ make os BOARD=rpi3 STAGES="__init__ os __cleanup__"
+$ make os BOARD=zerow STAGES="__init__ os __cleanup__"
 ```
 
 You can see other commands and current build config like so:
@@ -113,7 +113,7 @@ $ make
 
 ===== Available commands  =====
     make                # Print this help
-    rpi|rpi2|rpi3|rpi4|zero|zerow|zero2w  # Build Arch-ARM rootfs with pre-defined config
+    rpi|zero|zerow      # Build Arch-ARM rootfs with pre-defined config
     make shell          # Run Arch-ARM shell
     make binfmt         # Before build
     make scan           # Find all RPi devices in the local network
