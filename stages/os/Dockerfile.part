@@ -46,7 +46,7 @@ RUN pacman --noconfirm -Syy \
 		jshon \
 		rng-tools \
 		bc \
-		esac \
+		linux-rpi-legacy-headers \
 	&& (pacman --noconfirm -Sc || true)
 
 # rngd is still high cpu load so dont bother for now
