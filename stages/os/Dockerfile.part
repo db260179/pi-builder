@@ -46,9 +46,6 @@ RUN pacman --noconfirm -Syy \
 		jshon \
 		rng-tools \
 		bc \
-	&& case "$BOARD" in \
-			rpi|zero|zerow) pacman --needed --noconfirm -S linux-raspberrypi linux-raspberrypi-headers;; \
-			*) echo "Unknown board: $BOARD"; exit 1;; \
 		esac \
 	&& (pacman --noconfirm -Sc || true)
 
