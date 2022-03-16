@@ -25,14 +25,15 @@
 
 PROJECT ?= common
 ARCH ?= arm
-BOARD ?= rpi
+BOARD ?= rpi4
 STAGES ?= __init__ os pikvm-repo watchdog no-bluetooth no-audit ro ssh-keygen __cleanup__
 
 HOSTNAME ?= pi
 LOCALE ?= en_GB
 TIMEZONE ?= Europe/London
-#REPO_URL ?= http://mirror.yandex.ru/archlinux-arm
 REPO_URL = http://de3.mirror.archlinuxarm.org
+PIKVM_REPO_URL ?= https://files.pikvm.org/repos/arch/
+PIKVM_REPO_KEY ?= 912C773ABBD1B584
 BUILD_OPTS ?=
 
 CARD ?= /dev/mmcblk0
@@ -59,8 +60,7 @@ _QEMU_STATIC = $(_QEMU_COLLECTION)/qemu-$(_QEMU_GUEST_ARCH)-static
 _QEMU_STATIC_GUEST_PATH ?= $(QEMU_PREFIX)/bin/qemu-$(_QEMU_GUEST_ARCH)-static
 
 _RPI_ROOTFS_URL = $(REPO_URL)/os/ArchLinuxARM-$(shell bash -c " \
-	if [ '$(BOARD)' == rpi -o '$(BOARD)' == zero -o '$(BOARD)' == zerow ]; then echo rpi; \
-	elif [ '$(BOARD)' == rpi2 -o '$(BOARD)' == rpi3 -o '$(BOARD)' == zero2w ]; then echo rpi-2; \
+	if [ '$(BOARD)' == rpi2 -o '$(BOARD)' == rpi3 -o '$(BOARD)' == zero2w ]; then echo rpi-2; \
 	elif [ '$(BOARD)' == rpi4 ]; then echo rpi-4; \
 	else exit 1; \
 	fi \
@@ -113,6 +113,8 @@ $(call say,"Running configuration")
 @ echo "    LOCALE     = $(LOCALE)"
 @ echo "    TIMEZONE   = $(TIMEZONE)"
 @ echo "    REPO_URL   = $(REPO_URL)"
+@ echo "    PIKVM_REPO_URL   = $(PIKVM_REPO_URL)"
+@ echo "    PIKVM_REPO_KEY   = $(PIKVM_REPO_KEY)"
 @ echo
 @ echo "    CARD = $(CARD)"
 @ echo
@@ -135,7 +137,7 @@ all:
 	@ echo
 	$(call say,"Available commands")
 	@ echo "    make                     # Print this help"
-	@ echo "    make rpi|rpi2|rpi3|rpi4|zero|zerow|zero2w  # Build Arch-ARM rootfs with pre-defined config"
+	@ echo "    make rpi2|rpi3|rpi4|zero2w     # Build Arch-ARM rootfs with pre-defined config"
 	@ echo "    make shell               # Run Arch-ARM shell"
 	@ echo "    make toolbox             # Build the toolbox image"
 	@ echo "    make binfmt              # Configure ARM binfmt on the host system"
@@ -148,14 +150,11 @@ all:
 	@ echo
 
 
-rpi: BOARD=rpi
 rpi2: BOARD=rpi2
 rpi3: BOARD=rpi3
 rpi4: BOARD=rpi4
-zero: BOARD=zero
-zerow: BOARD=zerow
 zero2w: BOARD=zero2w
-rpi rpi2 rpi3 rpi4 zero zerow zero2w: os
+rpi2 rpi3 rpi4 zero2w: os
 
 
 run: $(__DEP_BINFMT)
@@ -219,6 +218,8 @@ os: $(__DEP_BINFMT) _buildctx
 			--build-arg "LOCALE=$(LOCALE)" \
 			--build-arg "TIMEZONE=$(TIMEZONE)" \
 			--build-arg "REPO_URL=$(REPO_URL)" \
+			--build-arg "PIKVM_REPO_URL=$(PIKVM_REPO_URL)" \
+			--build-arg "PIKVM_REPO_KEY=$(PIKVM_REPO_KEY)" \
 			--build-arg "REBUILD=$(shell uuidgen)" \
 			$(BUILD_OPTS) \
 		$(_BUILD_DIR)
