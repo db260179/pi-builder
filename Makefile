@@ -25,7 +25,7 @@
 
 PROJECT ?= common
 ARCH ?= arm
-BOARD ?= rpi4
+BOARD ?= rpi2
 STAGES ?= __init__ os pikvm-repo watchdog no-bluetooth no-audit ro ssh-keygen __cleanup__
 
 HOSTNAME ?= pi
