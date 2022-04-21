@@ -344,8 +344,8 @@ format: $(__DEP_TOOLBOX)
 	$(__DOCKER_RUN_TMP_PRIVILEGED) bash -c " \
 		set -x \
 		&& set -e \
-		&& yes | mkfs.vfat $(_CARD_BOOT) \
-		&& yes | mkfs.ext4 $(_CARD_ROOTFS) \
+		&& yes | mkfs.vfat -n PIBOOT $(_CARD_BOOT) \
+		&& yes | mkfs.ext4 -L PIROOT $(_CARD_ROOTFS) \
 		&& $(if $(CARD_DATA_FS_TYPE),yes | mkfs.$(CARD_DATA_FS_TYPE) $(CARD_DATA_FS_FLAGS) $(_CARD_DATA),/bin/true) \
 	"
 	$(call say,"Format complete")
