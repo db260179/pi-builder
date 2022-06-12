@@ -14,3 +14,4 @@ RUN pacman -Syu --noconfirm --needed \
 RUN mkdir /tools
 COPY install-binfmt /tools/
 COPY docker-extract /tools/
+COPY disk /tools/
