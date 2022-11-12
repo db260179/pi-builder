@@ -60,10 +60,10 @@ STAGES ?= __init__ os pikvm-repo watchdog no-bluetooth no-audit ro ssh-keygen __
 HOSTNAME ?= pi
 
 # Target system locale (UTF-8)
-LOCALE ?= en_US
+LOCALE ?= en_GB
 
 # Target system timezone
-TIMEZONE ?= Europe/Moscow
+TIMEZONE ?= Europe/London
 
 # Memory card location
 CARD ?= /dev/mmcblk0
@@ -128,8 +128,8 @@ $ make
 
     BUILD_OPTS =
     HOSTNAME   = pi
-    LOCALE     = en_US
-    TIMEZONE   = Europe/Moscow
+    LOCALE     = en_GB
+    TIMEZONE   = Europe/London
     REPO_URL   = http://mirror.yandex.ru/archlinux-arm
 
     CARD = /dev/mmcblk0
