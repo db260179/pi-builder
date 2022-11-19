@@ -313,6 +313,13 @@ __DOCKER_RUN_TMP = $(DOCKER) run \
 		--volume $(shell pwd)/$(_CACHE_DIR):/root/$(_CACHE_DIR) \
 		--workdir /root/$(_CACHE_DIR)/.. \
 	$(_TOOLBOX_IMAGE)
+	
+__DOCKER_CREATE_TMP_CONTAINER = $(DOCKER) create \
+		--name pikvm-tmp \
+		--tty \
+		--volume $(shell pwd)/$(_CACHE_DIR):/root/$(_CACHE_DIR) \
+		--workdir /root/$(_CACHE_DIR)/.. \
+	$(call read_built_config,IMAGE) bash
 
 
 __DOCKER_RUN_TMP_PRIVILEGED = $(DOCKER) run \
@@ -342,10 +349,13 @@ format: $(__DEP_TOOLBOX)
 
 extract: $(__DEP_TOOLBOX)
 	$(call check_build)
-	$(call say,"Extracting image from Docker")
+	$(call say,"Extracting image from Docker Container")
 	$(__DOCKER_RUN_TMP) rm -rf $(_RPI_RESULT_ROOTFS)
-	$(DOCKER) save --output $(_RPI_RESULT_ROOTFS_TAR) $(call read_built_config,IMAGE)
-	$(__DOCKER_RUN_TMP) /tools/docker-extract --root $(_RPI_RESULT_ROOTFS) $(_RPI_RESULT_ROOTFS_TAR)
+	$(__DOCKER_CREATE_TMP_CONTAINER)
+	$(DOCKER) export pikvm-tmp -o $(_RPI_RESULT_ROOTFS_TAR)
+	mkdir -p $(_RPI_RESULT_ROOTFS)
+	tar -xf $(_RPI_RESULT_ROOTFS_TAR) -C $(_RPI_RESULT_ROOTFS)
+	$(DOCKER) rm pikvm-tmp
 	$(__DOCKER_RUN_TMP) bash -c " \
 		echo $(call read_built_config,HOSTNAME) > $(_RPI_RESULT_ROOTFS)/etc/hostname \
 		&& (test -z '$(call optbool,$(QEMU_RM))' || rm $(_RPI_RESULT_ROOTFS)/$(_QEMU_STATIC_GUEST_PATH)) \
