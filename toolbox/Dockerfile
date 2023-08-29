@@ -15,3 +15,4 @@ RUN mkdir /tools
 COPY install-binfmt /tools/
 COPY docker-extract /tools/
 COPY disk /tools/
+COPY card-install /tools/
