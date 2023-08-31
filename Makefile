@@ -25,6 +25,11 @@
 
 -include config.mk
 
+export DOCKER ?= docker
+export DOCKER_RUN_TTY ?= $(DOCKER) run --rm --tty
+export DOCKER_RUN_TTY_INT ?= $(DOCKER_RUN_TTY) --interactive
+
+export NC ?=
 
 PROJECT ?= common
 ARCH ?= arm
@@ -38,12 +43,11 @@ TIMEZONE ?= Europe/London
 REPO_URL = http://de3.mirror.archlinuxarm.org
 PIKVM_REPO_URL ?= https://files.pikvm.org/repos/arch/
 PIKVM_REPO_KEY ?= 912C773ABBD1B584
-BUILD_OPTS ?=
+
+export QEMU_REPO_URL ?= https://ftp.debian.org/debian/pool/main/q/qemu
+QEMU_RM ?= 1
 
 CARD ?= /dev/mmcblk0
-
-export QEMU_PKG_URL ?= https://ftp.debian.org/debian/pool/main/q/qemu
-QEMU_RM ?= 1
 
 
 # =====
@@ -87,8 +91,8 @@ $(call say,"Running configuration")
 @ echo "    BOARD   = $(BOARD)"
 @ echo "    ARCH    = $(ARCH)"
 @ echo "    STAGES  = $(STAGES)"
-@ echo
 @ echo "    BUILD_OPTS = $(BUILD_OPTS)"
+@ echo
 @ echo "    HOSTNAME   = $(HOSTNAME)"
 @ echo "    LOCALE     = $(LOCALE)"
 @ echo "    TIMEZONE   = $(TIMEZONE)"
@@ -98,7 +102,7 @@ $(call say,"Running configuration")
 @ echo
 @ echo "    CARD = $(CARD)"
 @ echo
-@ echo "    QEMU_RM     = $(QEMU_RM)"
+@ echo "    QEMU_RM = $(QEMU_RM)"
 endef
 
 define check_build
@@ -137,11 +141,9 @@ rpi2 rpi3 rpi4 zero2w: os
 
 run: $(__DEP_BINFMT)
 	$(call check_build)
-	$(DOCKER) run \
-			--rm \
-			--tty \
-			--hostname $(call read_built_config,HOSTNAME) \
+	$(DOCKER_RUN_TTY) \
 			$(if $(RUN_CMD),$(RUN_OPTS),--interactive) \
+			--hostname $(call read_built_config,HOSTNAME) \
 		$(call read_built_config,IMAGE) \
 			$(if $(RUN_CMD),$(RUN_CMD),/bin/bash)
 
@@ -158,8 +160,7 @@ toolbox:
 
 binfmt: $(__DEP_TOOLBOX)
 	$(call say,"Ensuring $(ARCH) binfmt")
-	$(DOCKER) run \
-			--rm \
+	$(DOCKER_RUN_TTY) \
 			--privileged \
 		$(_TOOLBOX_IMAGE) \
 			/tools/install-binfmt \
@@ -169,8 +170,7 @@ binfmt: $(__DEP_TOOLBOX)
 
 scan: $(__DEP_TOOLBOX)
 	$(call say,"Searching for Pis in the local network")
-	$(DOCKER) run \
-			--rm \
+	$(DOCKER_RUN_TTY) \
 			--net host \
 		$(_TOOLBOX_IMAGE) \
 			arp-scan \
@@ -259,8 +259,7 @@ clean-all: $(__DEP_TOOLBOX) _cachedir clean
 	$(MAKE) -C toolbox clean-all
 	$(MAKE) -C qemu clean-all
 	$(MAKE) -C base clean-all
-	$(DOCKER) run \
-			--rm \
+	$(DOCKER_RUN_TTY) \
 			--volume $(shell pwd)/$(_CACHE_DIR):/root/$(_CACHE_DIR) \
 			--workdir /root/$(_CACHE_DIR)/.. \
 		$(_TOOLBOX_IMAGE) \
@@ -272,8 +271,7 @@ extract: $(__DEP_TOOLBOX) _cachedir
 	$(call check_build)
 	$(call say,"Extracting image from Docker")
 	$(DOCKER) save --output $(_RPI_RESULT_ROOTFS).tar $(call read_built_config,IMAGE)
-	$(DOCKER) run \
-			--rm \
+	$(DOCKER_RUN_TTY) run \
 			--volume $(shell pwd)/$(_CACHE_DIR):/root/$(_CACHE_DIR) \
 			--workdir /root/$(_CACHE_DIR)/.. \
 		$(_TOOLBOX_IMAGE) \
@@ -289,9 +287,7 @@ extract: $(__DEP_TOOLBOX) _cachedir
 install: $(__DEP_TOOLBOX) _cachedir extract
 	$(call check_build)
 	$(call say,"Installing to $(CARD)")
-	cat disk.conf | $(DOCKER) run \
-			--rm \
-			--interactive \
+	cat disk.conf | $(DOCKER_RUN_TTY_INT) run \
 			--privileged \
 			--volume $(shell pwd)/$(_CACHE_DIR):/root/$(_CACHE_DIR) \
 			--workdir /root/$(_CACHE_DIR)/.. \
