@@ -6,9 +6,11 @@ RUN mkdir -p /etc/pacman.d/hooks \
 RUN pacman -Syu --noconfirm --needed \
 		arp-scan \
 		python \
+		python-dask \
 		parted \
 		dosfstools \
 		rsync \
+		xz \
 	&& rm -rf /var/cache/pacman/pkg/*
 
 RUN mkdir /tools
