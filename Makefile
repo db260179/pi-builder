@@ -205,7 +205,7 @@ os: $(__DEP_BINFMT) _buildctx
 			--build-arg "TIMEZONE=$(TIMEZONE)" \
 			--build-arg "ARCH_DIST_REPO_URL=$(ARCH_DIST_REPO_URL)" \
 			--build-arg "ARCH_PIKVM_REPO_URL=$(ARCH_PIKVM_REPO_URL)" \
-			--build-arg "PIKVM_REPO_KEY=$(PIKVM_REPO_KEY)" \
+			--build-arg "ARCH_PIKVM_REPO_KEY=$(ARCH_PIKVM_REPO_KEY)" \
 			--build-arg "REBUILD=$(shell uuidgen)" \
 			$(BUILD_OPTS) \
 		.
@@ -229,7 +229,7 @@ _buildctx: | clean base qemu
 	test $(ARCH) != $(__HOST_ARCH) \
 		&& sed -i -e 's|%COPY_QEMU_USER_STATIC%|COPY qemu-$(ARCH)-static* /usr/bin/|g' $(_init) \
 		|| sed -i -e 's|%COPY_QEMU_USER_STATIC%||g' $(_init)
-	for var in BOARD ARCH LOCALE TIMEZONE ARCH_DIST_REPO_URL ARCH_PIKVM_REPO_URL PIKVM_REPO_KEY; do \
+	for var in BOARD ARCH LOCALE TIMEZONE ARCH_DIST_REPO_URL ARCH_PIKVM_REPO_URL ARCH_PIKVM_REPO_KEY; do \
 		echo "ARG $$var" >> $(_init) \
 		&& echo "ENV $$var \$$$$var" >> $(_init) \
 	; done
