@@ -21,10 +21,11 @@
 # ========================================================================== #
 
 
--include lib.mk
+include lib.mk
 
 -include config.mk
 
+export SUDO ?= sudo
 export DOCKER ?= docker
 export DOCKER_RUN_TTY ?= $(DOCKER) run --rm --tty
 export DOCKER_RUN_INT ?= $(DOCKER) run --rm --interactive
@@ -43,6 +44,10 @@ TIMEZONE ?= Europe/London
 REPO_URL = http://de3.mirror.archlinuxarm.org
 PIKVM_REPO_URL ?= https://files.pikvm.org/repos/arch/
 PIKVM_REPO_KEY ?= 912C773ABBD1B584
+
+export RPIOS_IMAGES_URL ?= https://downloads.raspberrypi.com
+
+export QEMU_REPO_URL ?= https://ftp.debian.org/debian/pool/main/q/qemu
 
 CARD ?= /dev/mmcblk0
 IMAGE ?= ./$(PROJECT).$(OS)-$(BOARD)-$(ARCH).img
@@ -156,7 +161,7 @@ shell: override RUN_OPTS:="$(RUN_OPTS) -i"
 shell: run
 
 
-toolbox: $(if $(filter x86_64,$(__HOST_ARCH)),,base)
+toolbox: $(call contains,x86_64,$(__HOST_ARCH),,base)
 	$(call say,"Ensuring toolbox image")
 	$(MAKE) -C toolbox toolbox
 	$(call say,"Toolbox image is ready")
@@ -186,8 +191,8 @@ scan: $(__DEP_TOOLBOX)
 
 # =====
 os: $(__DEP_BINFMT) _buildctx
-	$(call say,"Building OS")
 	$(eval _image = $(_IMAGES_PREFIX)-result)
+	$(call say,"Building OS")
 	cd $(_BUILD_DIR) && $(DOCKER) build \
 			--rm \
 			--tag=$(_image) \
@@ -211,8 +216,8 @@ os: $(__DEP_BINFMT) _buildctx
 
 
 _buildctx: | clean base qemu
-	$(call say,"Assembling main Dockerfile")
 	$(eval _init = $(_BUILD_DIR)/stages/__init__/Dockerfile.part)
+	$(call say,"Assembling main Dockerfile")
 	#
 	mkdir -p $(_BUILD_DIR)
 	ln base/$(_OS_BOARD_ARCH).tgz $(_BUILD_DIR)
@@ -240,7 +245,7 @@ _buildctx: | clean base qemu
 
 base:
 	$(call say,"Ensuring base rootfs")
-	$(MAKE) -C base $(_OS_BOARD_ARCH)
+	$(MAKE) -C base $(_OS_BOARD_ARCH).tgz
 	$(call say,"Base rootfs is ready")
 
 
@@ -302,7 +307,7 @@ extract: $(__DEP_TOOLBOX)
 				--remove-root \
 				--root=$(_RESULT_ROOTFS) \
 				--set-hostname="$(call read_built_config,HOSTNAME)" \
-				$(if $(filter x86_64,$(__HOST_ARCH)),--remove-qemu,) \
+				$(call contains,x86_64,$(__HOST_ARCH),--remove-qemu,) \
 			$(_RESULT_ROOTFS).tar
 	$(call say,"Extraction complete")
 
@@ -321,6 +326,7 @@ install: $(__DEP_TOOLBOX) extract
 
 
 image: $(__DEP_TOOLBOX) extract
+	$(eval _suffix = $(if $(call optbool,$(IMAGE_XZ)),.xz,))
 	$(call check_build)
 	$(call say,"Creating image $(IMAGE)")
 	$(call remove_image)
@@ -335,7 +341,6 @@ image: $(__DEP_TOOLBOX) extract
 				--devfs-prefix=/root \
 				--root=$(_RESULT_ROOTFS) \
 				--image=$(_RESULT_IMAGE)
-	$(eval _suffix = $(if $(call optbool,$(IMAGE_XZ)),.xz,))
 	mv $(_RESULT_IMAGE)$(_suffix) $(IMAGE)$(_suffix)
 	mv $(_RESULT_IMAGE)$(_suffix).sha1 $(IMAGE)$(_suffix).sha1
 	$(call say,"Image complete")
