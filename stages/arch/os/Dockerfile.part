@@ -13,8 +13,6 @@ RUN echo "Server = $ARCH_DIST_REPO_URL/\$arch/\$repo" > /etc/pacman.d/mirrorlist
 	&& pacman-key --init \
 	&& pacman-key --populate archlinuxarm
 
-RUN sed -i -e "s/^CheckSpace/#!!!CheckSpace/g" /etc/pacman.conf
-
 RUN pacman --noconfirm --ask=4 -Syy \
 	&& pacman --needed --noconfirm --ask=4 -S \
 		glibc \
@@ -34,6 +32,7 @@ RUN pacman --noconfirm --ask=4 -Syy \
 	&& pacman --needed --noconfirm --ask=4 -S \
 		base \
 		base-devel \
+		man \
 		vim \
 		colordiff \
 		tree \
@@ -65,18 +64,17 @@ RUN pacman --noconfirm --ask=4 -Syy \
 #	&& systemctl disable haveged \
 #	&& systemctl enable rngd
 
-RUN sed -i -e "s/^#MAKEFLAGS=.*/MAKEFLAGS=-j5/g" /etc/makepkg.conf
-RUN sed -i -e "s/ \!ccache / ccache /g" /etc/makepkg.conf
-ENV PATH="/usr/lib/ccache/bin/:${PATH}"
-
 RUN sed -i -e '/\<pam_systemd\.so\>/ s/^#*/#/' /etc/pam.d/system-login \
 	&& sed -i -e '/\<pam_systemd_home\.so\>/ s/^#*/#/' /etc/pam.d/system-auth
 
 # https://www.freedesktop.org/wiki/Software/systemd/PredictableNetworkInterfaceNames/
 RUN ln -s /dev/null /etc/systemd/network/99-default.link
-ADD stages/os/eth0.network /etc/systemd/network/eth0.network
 
+COPY stages/os/cmdline.txt /boot/
+COPY stages/os/fstab /etc/
 COPY stages/os/e2fsck.conf /etc/
+COPY stages/os/eth0.network /etc/systemd/network/
+COPY stages/os/rngd /etc/conf.d/
 
 COPY stages/os/gitconfig /etc/skel/.gitconfig
 COPY stages/os/gitconfig /root/.gitconfig
