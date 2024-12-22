@@ -34,17 +34,19 @@ export DOCKER_RUN_INT ?= $(DOCKER) run --rm --interactive
 export NC ?=
 
 PROJECT ?= common
-ARCH ?= arm
-BOARD ?= rpi2
-STAGES ?= __init__ os pikvm-repo watchdog no-bluetooth no-audit ro ssh-keygen __cleanup__
-DOCKER ?= docker
+OS ?= arch
+export BOARD ?= rpi4
+export ARCH ?= arm
+STAGES ?= __init__ os pikvm-repo pistat watchdog rootdelay no-bluetooth no-audit ro restore-mirrorlist ssh-keygen __cleanup__
+BUILD_OPTS ?=
 
 HOSTNAME ?= pi
 LOCALE ?= en_GB
 TIMEZONE ?= Europe/London
-REPO_URL = http://de3.mirror.archlinuxarm.org
-PIKVM_REPO_URL ?= https://files.pikvm.org/repos/arch/
-PIKVM_REPO_KEY ?= 912C773ABBD1B584
+
+export ARCH_DIST_REPO_URL ?= https://de3.mirror.archlinuxarm.org
+ARCH_PIKVM_REPO_URL ?= https://files.pikvm.org/repos/arch/
+ARCH_PIKVM_REPO_KEY ?= 912C773ABBD1B584
 
 export RPIOS_IMAGES_URL ?= https://downloads.raspberrypi.com
 
@@ -79,23 +81,8 @@ _CACHE_DIR = ./.cache
 _BUILD_DIR = ./.build
 _BUILT_IMAGE_CONFIG = ./.built.conf
 
-_QEMU_GUEST_ARCH = arm
-_QEMU_STATIC_BASE_URL = http://ftp.uk.debian.org/debian/pool/main/q/qemu
-_QEMU_COLLECTION = qemu
-_QEMU_STATIC = $(_QEMU_COLLECTION)/qemu-$(_QEMU_GUEST_ARCH)-static
-_QEMU_STATIC_GUEST_PATH ?= $(QEMU_PREFIX)/bin/qemu-$(_QEMU_GUEST_ARCH)-static
-
-_RPI_ROOTFS_URL = $(REPO_URL)/os/ArchLinuxARM-$(shell bash -c " \
-	if [ '$(BOARD)' == rpi2 -o '$(BOARD)' == rpi3 -o '$(BOARD)' == zero2w ]; then echo rpi-2; \
-	elif [ '$(BOARD)' == rpi4 ]; then echo rpi-4; \
-	else exit 1; \
-	fi \
-")-latest.tar.gz
-_RPI_BASE_ROOTFS_TGZ = $(_TMP_DIR)/base-rootfs-$(BOARD).tar.gz
-_RPI_BASE_IMAGE = $(_IMAGES_PREFIX)-base-$(BOARD)
-_RPI_RESULT_IMAGE = $(PROJECT)-$(_IMAGES_PREFIX)-result-$(BOARD)
-_RPI_RESULT_ROOTFS_TAR = $(_CACHE_DIR)/result-rootfs.tar
-_RPI_RESULT_ROOTFS = $(_CACHE_DIR)/result-rootfs
+_RESULT_ROOTFS = $(_CACHE_DIR)/$(PROJECT).$(_OS_BOARD_ARCH).rootfs
+_RESULT_IMAGE = $(_CACHE_DIR)/$(PROJECT).$(_OS_BOARD_ARCH).img
 
 
 # =====
@@ -105,11 +92,11 @@ endef
 
 define show_running_config
 $(call say,"Running configuration")
-@ echo "    PROJECT = $(PROJECT)"
-@ echo "    ARCH   = $(ARCH)"
-@ echo "    BOARD   = $(BOARD)"
-@ echo "    ARCH    = $(ARCH)"
-@ echo "    STAGES  = $(STAGES)"
+@ echo "    PROJECT    = $(PROJECT)"
+@ echo "    OS         = $(OS)"
+@ echo "    BOARD      = $(BOARD)"
+@ echo "    ARCH       = $(ARCH)"
+@ echo "    STAGES     = $(STAGES)"
 @ echo "    BUILD_OPTS = $(BUILD_OPTS)"
 @ echo
 @ echo "    HOSTNAME   = $(HOSTNAME)"
@@ -131,7 +118,7 @@ all:
 	@ echo
 	$(call say,"Available commands")
 	@ echo "    make                     # Print this help"
-	@ echo "    make rpi2|rpi3|rpi4|zero2w     # Build Arch-ARM rootfs with pre-defined config"
+	@ echo "    make rpi2|rpi3|rpi4|zero2w  # Build Arch-ARM rootfs with pre-defined config"
 	@ echo "    make shell               # Run Arch-ARM shell"
 	@ echo "    make toolbox             # Build the toolbox image"
 	@ echo "    make binfmt              # Configure ARM binfmt on the host system"
@@ -201,7 +188,7 @@ os: $(__DEP_BINFMT) _buildctx
 			--tag=$(_image) \
 			$(if $(TAG),--tag=$(TAG),) \
 			$(if $(call optbool,$(NC)),--no-cache,) \
-			--build-arg "ARCH=$(ARCH)" \
+			--build-arg "OS=$(OS)" \
 			--build-arg "BOARD=$(BOARD)" \
 			--build-arg "ARCH=$(ARCH)" \
 			--build-arg "LOCALE=$(LOCALE)" \
