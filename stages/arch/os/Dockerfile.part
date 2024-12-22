@@ -1,5 +1,6 @@
 RUN echo "$LOCALE.UTF-8 UTF-8" > /etc/locale.gen \
-	&& ([ "$LOCALE" == "en_GB" ] || echo "en_GB.UTF-8 UTF-8" >> /etc/locale.gen) \
+	&& ([ "$LOCALE" = "en_GB" ] || echo "en_GB.UTF-8 UTF-8" >> /etc/locale.gen) \
+	&& ([ "$LOCALE" = "C" ] || echo "C.UTF-8 UTF-8" >> /etc/locale.gen) \
 	&& locale-gen
 ENV LC_ALL en_US.UTF-8
 
@@ -55,16 +56,16 @@ RUN pacman --noconfirm --ask=4 -Syy \
 		jshon \
 		rng-tools \
 		bc \
-	&& case "$BOARD" in \
-			rpi2|rpi3|rpi4|zero2w) pacman --needed --noconfirm --ask=4 -S linux-rpi linux-rpi-headers;; \
-			*) echo "Unknown board: $BOARD"; exit 1;; \
-		esac \
-	&& (pacman --noconfirm -Sc || true)
+		screen \
+		dosfstools \
+		raspberrypi-utils \
+		linux-rpi \
+		linux-rpi-headers \
+	&& rm -rf /var/cache/pacman/pkg/*
 
-# rngd is still high cpu load so dont bother for now
-#RUN echo 'RNGD_OPTS="-o /dev/random -r /dev/hwrng -x 5"' > /etc/conf.d/rngd \
-#	&& systemctl disable haveged \
-#	&& systemctl enable rngd
+# https://github.com/pikvm/pikvm/issues/190
+RUN (systemctl disable haveged || true) \
+	&& systemctl enable rngd
 
 RUN sed -i -e '/\<pam_systemd\.so\>/ s/^#*/#/' /etc/pam.d/system-login \
 	&& sed -i -e '/\<pam_systemd_home\.so\>/ s/^#*/#/' /etc/pam.d/system-auth
@@ -84,11 +85,11 @@ COPY stages/os/gitconfig /etc/skel/.gitconfig
 COPY stages/os/gitconfig /root/.gitconfig
 COPY stages/os/gitconfig /home/alarm/.gitconfig
 RUN mkdir /tmp/linux-profile \
-	&& git clone https://github.com/db260179/linux-profile.git /tmp/linux-profile --depth=1 \
-	&& cp -a /tmp/linux-profile/{.bash_profile,.bashrc,.vimrc,.vimpagerrc,.vim} /etc/skel \
-	&& cp -a /tmp/linux-profile/{.bash_profile,.bashrc,.vimrc,.vimpagerrc,.vim} /root \
-	&& cp -a /tmp/linux-profile/{.bash_profile,.bashrc,.vimrc,.vimpagerrc,.vim} /home/alarm \
-	&& chown -R alarm:alarm /home/alarm/{.bash_profile,.bashrc,.vimrc,.vimpagerrc,.vim,.gitconfig} \
+	&& git clone --depth=1 https://github.com/mdevaev/linux-profile.git /tmp/linux-profile \
+	&& cp -a /tmp/linux-profile/{.bash_profile,.bashrc,.vimrc,.vim} /etc/skel \
+	&& cp -a /tmp/linux-profile/{.bash_profile,.bashrc,.vimrc,.vim} /root \
+	&& cp -a /tmp/linux-profile/{.bash_profile,.bashrc,.vimrc,.vim} /home/alarm \
+	&& chown -R alarm:alarm /home/alarm/{.bash_profile,.bashrc,.vimrc,.vim,.gitconfig} \
 	&& rm -rf /tmp/linux-profile
 
 COPY stages/os/pkg-install /usr/local/bin/
