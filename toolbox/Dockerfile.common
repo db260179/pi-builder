@@ -1,9 +1,22 @@
-FROM archlinux/archlinux:base
+RUN sed -i -e "s/^CheckSpace/#!!!CheckSpace/g" /etc/pacman.conf
 
-RUN mkdir -p /etc/pacman.d/hooks \
-	&& ln -s /dev/null /etc/pacman.d/hooks/30-systemd-tmpfiles.hook
-
-RUN pacman -Syu --noconfirm --needed \
+RUN pacman --noconfirm --ask=4 -Syy \
+       && pacman --needed --noconfirm --ask=4 -S \
+               glibc \
+               openssl \
+               openssl-1.1 \
+       && pacman --needed --noconfirm --ask=4 -S \
+               pacman \
+       && pacman-db-upgrade \
+       && pacman-key --init \
+       && pacman --needed --noconfirm --ask=4 -S \
+               p11-kit \
+               archlinux-keyring \
+               ca-certificates \
+               ca-certificates-mozilla \
+               ca-certificates-utils \
+       && pacman --noconfirm --ask=4 -Syu \
+       && pacman --needed --noconfirm --ask=4 -S \
 		arp-scan \
 		python \
 		python-dask \
