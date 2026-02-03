@@ -26,6 +26,7 @@ import os
 import re
 import subprocess
 import dataclasses
+import time
 
 import dask
 
@@ -82,6 +83,22 @@ def _run_commands(cmds: list[list[str]]) -> None:
             raise SystemExit(1)
 
 
+def _run_command_with_retry(cmd: list[str], retries: int = 5, delay: float = 2.0) -> None:
+    print(f"CMD [ {sys.argv[0]} ] ==>", " ".join(cmd))
+    sys.stdout.flush()
+
+    for attempt in range(retries):
+        try:
+            subprocess.run(cmd, check=True)
+            return
+        except subprocess.CalledProcessError as e:
+            if attempt < retries - 1:
+                print(f"Command failed (attempt {attempt + 1}/{retries}), retrying in {delay}s...", file=sys.stderr)
+                time.sleep(delay)
+                continue
+            raise SystemExit(1)
+
+
 def _format_disk(device_path: str) -> None:
     (parted, _) = _parse_script(sys.stdin.read())
     cmds: list[list[str]] = []
@@ -94,7 +111,16 @@ def _format_disk(device_path: str) -> None:
 
 def _mkfs_disk(device_path: str) -> None:
     (_, filesystems) = _parse_script(sys.stdin.read())
-    cmds: list[list[str]] = []
+
+    # Wait for partition devices to settle after formatting
+    time.sleep(2)
+
+    # Extract loop device number
+    device_name = os.path.basename(device_path)
+    loop_match = re.match(r'loop(\d+)', device_name)
+    if loop_match:
+        loop_num = int(loop_match.group(1))
+
     for mkfs in filesystems:
         cmd: list[str] = []
         if mkfs.fs == "fat32":
@@ -109,11 +135,45 @@ def _mkfs_disk(device_path: str) -> None:
                 cmd.extend(["-m", mkfs.reserved])
         else:
             raise RuntimeError(f"Unsupported filesystem: {mkfs.fs}")
-        cmd.append(_make_partition(device_path, mkfs.npart))
-        cmds.append(cmd)
-    cmds.append(["/usr/bin/partprobe", device_path])
-    cmds.append(["/usr/bin/partx", "-vu", device_path])
-    _run_commands(cmds)
+
+        part_path = _make_partition(device_path, mkfs.npart)
+        cmd.append(part_path)
+
+        # Create partition device node if it doesn't exist (for loop devices)
+        if loop_match and not os.path.exists(part_path):
+            # Major number 259 is for block extended devices (loop partitions)
+            # Minor number calculation: (loop_num * 8) + partition_num
+            minor = (loop_num * 8) + mkfs.npart
+            print(f"Creating partition device node: {part_path} (259:{minor})", file=sys.stderr)
+            try:
+                subprocess.run(["mknod", part_path, "b", "259", str(minor)], check=True)
+            except subprocess.CalledProcessError as e:
+                print(f"Warning: Failed to create {part_path}: {e}", file=sys.stderr)
+
+        # Wait for partition device to exist and be ready
+        for wait_attempt in range(20):
+            if os.path.exists(part_path):
+                # Additional check - try to open it
+                try:
+                    with open(part_path, 'rb') as f:
+                        pass
+                    break
+                except (IOError, OSError):
+                    pass
+            time.sleep(0.5)
+
+        if not os.path.exists(part_path):
+            raise RuntimeError(f"Partition device {part_path} does not exist after waiting")
+
+        # Run mkfs with retry logic
+        _run_command_with_retry(cmd, retries=3, delay=2.0)
+
+    # Final sync
+    _run_commands([
+        ["/usr/bin/sync"],
+        ["/usr/bin/partprobe", device_path],
+        ["/usr/bin/partx", "-vu", device_path]
+    ])
 
 
 def _mount_disk(device_path: str, prefix_path: str, mount: bool) -> None:
